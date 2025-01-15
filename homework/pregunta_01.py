@@ -5,8 +5,13 @@
 Escriba el codigo que ejecute la accion solicitada en cada pregunta.
 """
 
+import os
+import pandas as pd
+import zipfile
+
 
 def pregunta_01():
+    #
     """
     La información requerida para este laboratio esta almacenada en el
     archivo "files/input.zip" ubicado en la carpeta raíz.
@@ -71,3 +76,46 @@ def pregunta_01():
 
 
     """
+
+    ruta_zip, dir_salida_zip = "files/input.zip", "files/"
+    ruta_dir_output = "files/output"
+
+    # Descomprimir el archivo zip
+    with zipfile.ZipFile(ruta_zip, "r") as zip_ref:
+        zip_ref.extractall(dir_salida_zip)
+
+    # Definir los directorios de entrada y salida
+    dir_entrada = os.path.join(dir_salida_zip, "input")
+    dir_train = os.path.join(dir_entrada, "train")
+    dir_test = os.path.join(dir_entrada, "test")
+
+    # Función para generar el CSV
+    def generar_csv(dir_entrada, archivo_salida):
+        datos = []
+        for sentimiento in ["negative", "positive", "neutral"]:
+            dir_sentimiento = os.path.join(dir_entrada, sentimiento)
+            for nombre_archivo in os.listdir(dir_sentimiento):
+                if nombre_archivo.endswith(".txt"):
+                    ruta_archivo = os.path.join(dir_sentimiento, nombre_archivo)
+                    with open(ruta_archivo, "r", encoding="utf-8") as archivo:
+                        frase = archivo.read().strip()
+                        datos.append(
+                            {
+                                "phrase": frase,
+                                "target": sentimiento,
+                            }
+                        )
+
+        df = pd.DataFrame(datos)
+        df.to_csv(archivo_salida, index=False)
+
+    # Crear la carpeta de salida si no existe
+    os.makedirs(ruta_dir_output, exist_ok=True)
+
+    # Generar los archivos CSV
+    generar_csv(dir_train, os.path.join(ruta_dir_output, "train_dataset.csv"))
+    generar_csv(dir_test, os.path.join(ruta_dir_output, "test_dataset.csv"))
+
+
+if __name__ == "__main__":
+    pregunta_01()
